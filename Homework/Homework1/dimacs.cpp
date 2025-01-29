@@ -15,7 +15,7 @@ int main(int argc, char* argv[]) {
     cerr << "Unable to open file" << endl;
     return 1;
   }
-  int num_vertices,num_edges = 0;
+  int num_vertices,num_edges;
   fin >> num_vertices >> num_edges;
   // create adjacency matrix
   vector<vector<int> > adjmatrix;
