@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
-#include <sstream>
 using namespace std;
 
 int main(int argc, char* argv[]) {
@@ -10,18 +9,13 @@ int main(int argc, char* argv[]) {
     cerr << "usage: ./dimacs file" << endl;
     return 1;
   }
-  // convert c-style string into c++ string
-  string file;
-  stringstream ss;
-  ss << argv[1];
-  ss >> file;
   // open file
-  ifstream fin(file);
+  ifstream fin(argv[1]);
   if (!fin.is_open()) {
     cerr << "Unable to open file" << endl;
     return 1;
   }
-  int num_vertices,num_edges;
+  int num_vertices,num_edges = 0;
   fin >> num_vertices >> num_edges;
   // create adjacency matrix
   vector<vector<int> > adjmatrix;
