@@ -1,45 +1,57 @@
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/boyer_myrvold_planar_test.hpp>
 #include <iostream>
-#include <vector>
+#include <fstream>
+#include <sstream>
 using namespace std;
 
-struct Graph {
-  vector<vector<int> > adjmatrix;
-  int num_edges = 0;
-  int num_vertices = 0;
-  Graph(int vertices, int edges) {
-    num_edges = edges;
-    num_vertices = vertices;
+int main(int argc, char* argv[]) {
+  ifstream fin;
+  stringstream ss;
+  string file_name;
+  if (argc != 2) {
+    cerr << "usage: ./contract <file_name>" << '\n';
+    return 1;
   }
-}
+  ss << argv[1];
+  ss >> file_name;
+  if(!fin) {
+    cerr << "Error opening file.\n";
+    return 1;
+  }
 
-bool planarity(Graph G){
-    int E = 0;
-    for(auto v : G){
-        E += v.size();
-    }
-    E = E/2;
-    if(E > 3*V - 3){
-        return false;
-    }
-    vector<graph> BC;
-    biconnectedComponents(G, BC);
+  int num_vertices, num_edges;
+  fin >> num_vertices >> num_edges;
 
-    for(auto C : BC){
-        palm P = transform(C);
-        cycle c = getCycle(P);
-        planar plane = constructPlanar(c);
-        vector<graph> pieces = delCycle(c, plane);
-        for(auto piece : pieces){
-            if(planarity(piece)){
-                addPiece(piece);
-            }
-            else{
-                return false;
-            }
-        }
-    }
-}
+    // Define the graph type (undirected).
+    // vecS for vertex container, vecS for edge container, undirectedS for an undirected graph.
+    typedef boost::adjacency_list<
+        boost::vecS,
+        boost::vecS,
+        boost::undirectedS
+    > Graph;
 
-int main() {
-  return 0;
+    Graph g(num_vertices);
+
+    // Read edges
+    for(int i = 0; i < num_edges; i++) {
+        int v1, v2;
+        fin >> v1 >> v2;
+        // Assuming the input vertices are 0-based.
+        // If they are 1-based in the input, you need to subtract 1 from each.
+        boost::add_edge(v1, v2, g);
+    }
+
+    fin.close();
+
+    // Now test for planarity
+    bool is_planar = boost::boyer_myrvold_planarity_test(g);
+
+    if(is_planar) {
+        cout << "The graph is planar.\n";
+    } else {
+        cout << "The graph is NOT planar.\n";
+    }
+
+    return 0;
 }
