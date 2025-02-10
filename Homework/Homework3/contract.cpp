@@ -41,10 +41,9 @@ int main(int argc, char* argv[]) {
 
   if(is_planar) {
     cout << "The graph is planar.\n";
+    return 0;
   }
   else {
-    cout << "The graph is NOT planar.\n";
+    // this is where we'll find Kuratowski subgraphs and contract edges to break them
   }
-
-    return 0;
 }
