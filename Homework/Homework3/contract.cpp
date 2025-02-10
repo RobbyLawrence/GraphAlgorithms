@@ -6,7 +6,6 @@
 using namespace std;
 
 int main(int argc, char* argv[]) {
-  ifstream fin;
   stringstream ss;
   string file_name;
   if (argc != 2) {
@@ -15,6 +14,7 @@ int main(int argc, char* argv[]) {
   }
   ss << argv[1];
   ss >> file_name;
+  ifstream fin(file_name);
   if(!fin) {
     cerr << "Error opening file.\n";
     return 1;
@@ -37,14 +37,11 @@ int main(int argc, char* argv[]) {
     for(int i = 0; i < num_edges; i++) {
         int v1, v2;
         fin >> v1 >> v2;
-        // Assuming the input vertices are 0-based.
-        // If they are 1-based in the input, you need to subtract 1 from each.
         boost::add_edge(v1, v2, g);
     }
 
     fin.close();
 
-    // Now test for planarity
     bool is_planar = boost::boyer_myrvold_planarity_test(g);
 
     if(is_planar) {
