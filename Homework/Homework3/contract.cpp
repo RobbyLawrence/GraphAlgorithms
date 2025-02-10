@@ -22,33 +22,29 @@ int main(int argc, char* argv[]) {
 
   int num_vertices, num_edges;
   fin >> num_vertices >> num_edges;
+  typedef boost::adjacency_list<
+    boost::vecS,
+    boost::vecS,
+    boost::undirectedS
+  > Graph;
 
-    // Define the graph type (undirected).
-    // vecS for vertex container, vecS for edge container, undirectedS for an undirected graph.
-    typedef boost::adjacency_list<
-        boost::vecS,
-        boost::vecS,
-        boost::undirectedS
-    > Graph;
+  Graph g(num_vertices);
+  for(int i = 0; i < num_edges; i++) {
+    int v1, v2;
+    fin >> v1 >> v2;
+    boost::add_edge(v1, v2, g);
+  }
 
-    Graph g(num_vertices);
+  fin.close();
 
-    // Read edges
-    for(int i = 0; i < num_edges; i++) {
-        int v1, v2;
-        fin >> v1 >> v2;
-        boost::add_edge(v1, v2, g);
-    }
+  bool is_planar = boost::boyer_myrvold_planarity_test(g);
 
-    fin.close();
-
-    bool is_planar = boost::boyer_myrvold_planarity_test(g);
-
-    if(is_planar) {
-        cout << "The graph is planar.\n";
-    } else {
-        cout << "The graph is NOT planar.\n";
-    }
+  if(is_planar) {
+    cout << "The graph is planar.\n";
+  }
+  else {
+    cout << "The graph is NOT planar.\n";
+  }
 
     return 0;
 }
