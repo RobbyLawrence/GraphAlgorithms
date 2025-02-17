@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
       if (i == j) {
         continue;
       }
-      // I'm outputting
+      // I'm outputting one chart instead of two
       vector<int> path = find_shortest_path(i, j, adjmatrix);
       printf("%d -> %d : ",(int)i,(int)j);
       for (int vertex : path) {
