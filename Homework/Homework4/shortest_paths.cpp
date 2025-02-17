@@ -60,20 +60,26 @@ vector<int> find_shortest_path(int start, int end, const vector<vector<int> >& a
 
 int main(int argc, char* argv[]) {
   vector<vector<int> > adjmatrix = import_graph(argv[1]);
+  vector<size_t> lengths;
   // there are (n choose 2) pairs in a graph with n vertices
+
   for (size_t i = 0;i<adjmatrix.size();i++) {
     for (size_t j = i;j<adjmatrix.size();j++) {
       if (i == j) {
         continue;
       }
-      // I'm outputting one chart instead of two
       vector<int> path = find_shortest_path(i, j, adjmatrix);
       printf("%d -> %d : ",(int)i,(int)j);
       for (int vertex : path) {
         cout << vertex << " ";
       }
       cout << "| Length: " << path.size() - 1 << endl;
+      lengths.push_back(path.size() - 1);
     }
+  }
+  cout << "Path lengths: " << endl;
+  for (size_t i = 0;i<lengths.size();i++) {
+
   }
   return 0;
 }
