@@ -1,8 +1,10 @@
 #include <iostream>
+#include <utility>
 #include <vector>
 #include <fstream>
 #include <queue>
 #include <algorithm>
+#include <map>
 using namespace std;
 
 vector<vector<int> > import_graph(string file_name) {
@@ -60,9 +62,10 @@ vector<int> find_shortest_path(int start, int end, const vector<vector<int> >& a
 
 int main(int argc, char* argv[]) {
   vector<vector<int> > adjmatrix = import_graph(argv[1]);
-  vector<size_t> lengths;
   // there are (n choose 2) pairs in a graph with n vertices
-
+  cout << "Path lengths: " << endl;
+  map<pair<size_t,size_t>,size_t> path_lengths;
+  map<pair<size_t,size_t>,size_t>::iterator it;
   for (size_t i = 0;i<adjmatrix.size();i++) {
     for (size_t j = i;j<adjmatrix.size();j++) {
       if (i == j) {
@@ -73,13 +76,25 @@ int main(int argc, char* argv[]) {
       for (int vertex : path) {
         cout << vertex << " ";
       }
-      cout << "| Length: " << path.size() - 1 << endl;
-      lengths.push_back(path.size() - 1);
+      path_lengths.insert(make_pair(make_pair(i,j),path.size() - 1));
     }
   }
-  cout << "Path lengths: " << endl;
-  for (size_t i = 0;i<lengths.size();i++) {
-
+  cout << "Path lengths: " << '\n';
+  for (size_t i = 0;i<adjmatrix.size();i++) {
+    for (size_t j = 0;j<adjmatrix.size();j++) {
+      if (i == j) {
+        cout << "0 ";
+        continue;
+      }
+      else if (j < i) {
+        cout << "- ";
+        continue;
+      }
+      else {
+        cout << path_lengths.find(make_pair(i,j))->second << " ";
+      }
+    }
+    cout << '\n';
   }
   return 0;
 }
