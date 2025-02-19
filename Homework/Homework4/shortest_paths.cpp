@@ -105,6 +105,10 @@ int main(int argc, char* argv[]) {
       int value = path_lengths.find(make_pair(i,j))->second;
       if (value == -1) {
         cout << "- ";
+        continue;
+      }
+      else {
+        cout << value << " ";
       }
     }
     cout << '\n';
