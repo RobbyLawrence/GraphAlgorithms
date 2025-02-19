@@ -25,12 +25,13 @@ vector<vector<int> > import_graph(string file_name) {
   }
   return adjmatrix;
 }
-
-vector<int> find_shortest_path(int start, int end, const vector<vector<int> >& adjmatrix) {
+// bool, because we need to cover the cases where paths don't exist
+bool find_shortest_path(int start, int end, const vector<vector<int> > &adjmatrix, vector<int> &path) {
   int n = adjmatrix.size();
   vector<bool> visited(n, false);
   // create vector to keep track of which vertices are each others' parent vertices
   vector<int> parent(n, -1);
+  bool val = false;
   queue<int> q;
   q.push(start);
   visited[start] = true;
@@ -38,6 +39,7 @@ vector<int> find_shortest_path(int start, int end, const vector<vector<int> >& a
     int current = q.front();
     q.pop();
     if (current == end) {
+      val = true;
       break;
     }
 
@@ -49,15 +51,17 @@ vector<int> find_shortest_path(int start, int end, const vector<vector<int> >& a
         }
       }
   }
+  if (!val) { // we want to stop here if we didn't break out of the bfs
+    return val;
+  }
   // reconstruct the path
-  vector<int> path;
   if (visited[end]) {
     for (int i = end; i != -1; i = parent[i]) {
       path.push_back(i);
     }
     reverse(path.begin(), path.end());
   }
-  return path;
+  return true;
 }
 
 int main(int argc, char* argv[]) {
@@ -71,14 +75,22 @@ int main(int argc, char* argv[]) {
       if (i == j) {
         continue;
       }
-      vector<int> path = find_shortest_path(i, j, adjmatrix);
-      printf("%d -> %d : ",(int)i,(int)j);
-      for (int vertex : path) {
-        cout << vertex << " ";
+      vector<int> path;
+      bool val = find_shortest_path(i, j, adjmatrix, path);
+      if (val) {
+        printf("%d -> %d : ",(int)i,(int)j);
+        for (int vertex : path) {
+          cout << vertex << " ";
+        }
+        cout << '\n';
+        path_lengths.insert(make_pair(make_pair(i,j),path.size() - 1));
+      } else {
+        printf("%d -> %d : DNE\n",(int)i,(int)j);
+        path_lengths.insert(make_pair(make_pair(i,j),-1));
       }
-      path_lengths.insert(make_pair(make_pair(i,j),path.size() - 1));
     }
   }
+  cout << '\n';
   cout << "Path lengths: " << '\n';
   for (size_t i = 0;i<adjmatrix.size();i++) {
     for (size_t j = 0;j<adjmatrix.size();j++) {
@@ -90,8 +102,9 @@ int main(int argc, char* argv[]) {
         cout << "- ";
         continue;
       }
-      else {
-        cout << path_lengths.find(make_pair(i,j))->second << " ";
+      int value = path_lengths.find(make_pair(i,j))->second;
+      if (value == -1) {
+        cout << "- ";
       }
     }
     cout << '\n';
