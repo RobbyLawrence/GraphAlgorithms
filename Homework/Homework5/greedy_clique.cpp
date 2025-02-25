@@ -25,26 +25,24 @@ vector<vector<int> > import_graph(string file) { // import the graph as a 2D vec
     return adjmatrix;
 }
 
-void find_maximal_cliques(const vector<vector<int> > &adjmatrix, vector<int> &current_clique, vector<int> &candidates, vector<vector<int> > &all_cliques) {
+void find_maximal_cliques(vector<vector<int> > &adjmatrix, vector<int> &current_clique, vector<int> &candidates, vector<vector<int> > &all_cliques) {
     if (candidates.empty()) {
         if (current_clique.size() > 1) {
             all_cliques.push_back(current_clique);
         }
         return;
     }
-
     while (!candidates.empty()) {
-        // this is similar behavior to a queue, but I didn't want to use a queue because it doesn't support indexing
-        int v = candidates.back();
+        // this is similar behavior to a queue, but I didn't want to use a queue because it doesn't have indexing
+        int vertex_1 = candidates.back();
         candidates.pop_back();
-
         vector<int> new_candidates;
-        for (int u : candidates) {
-            if (adjmatrix[v][u]) { // test if a vertex i
-                new_candidates.push_back(u);
+        for (int vertex_2 : candidates) {
+            if (adjmatrix[vertex_1][vertex_2]) { // add neighbors of the candidates to the candidates vector
+                new_candidates.push_back(vertex_2);
             }
         }
-        current_clique.push_back(v);
+        current_clique.push_back(vertex_1);
         find_maximal_cliques(adjmatrix, current_clique, new_candidates, all_cliques); // recursive call
         current_clique.pop_back();
     }
@@ -71,17 +69,15 @@ int main(int argc, char* argv[]) {
     size_t num_vertices = adjmatrix.size();
     vector<vector<int> > all_cliques;
 
-    for (size_t v = 0; v < num_vertices; ++v) {
+    for (size_t v = 0; v < num_vertices; v++) {
         vector<int> current_clique;
         current_clique.push_back(v);
-
         vector<int> candidates;
-        for (int u = v + 1; u < num_vertices; ++u) {
+        for (int u = v + 1; u < num_vertices; u++) {
             if (adjmatrix[v][u]) {
                 candidates.push_back(u);
             }
         }
-
         find_maximal_cliques(adjmatrix, current_clique, candidates, all_cliques);
     }
     // find the maximum cliques
@@ -109,7 +105,7 @@ int main(int argc, char* argv[]) {
     else {
         cout << "Maximum clique size: " << max_clique_size << endl;
         cout << "There are " << max_cliques.size() << " maximum cliques." << endl;
-        for (size_t i = 0; i < max_cliques.size();i++) {
+        for (size_t i = 1; i <= max_cliques.size();i++) {
             cout << "Maximum clique #" << i << " vertices:\n";
             sort(max_cliques[i].begin(),max_cliques[i].end());
             for (int vertex : max_cliques[i]) {
@@ -118,6 +114,5 @@ int main(int argc, char* argv[]) {
             cout << endl;
         }
     }
-
     return 0;
 }
