@@ -19,7 +19,7 @@ def solve_min_vertex_cover(num_vertices, edges):
         # had to look up how to do all this lol
         x = model.addVars(num_vertices, vtype=GRB.BINARY, name="x")
         model.setObjective(quicksum(x[i] for i in range(num_vertices)), GRB.MINIMIZE)
-        # add constraints
+        # add constraint
         for u, v in edges:
             model.addConstr(x[u] + x[v] >= 1, f"edge_{u}_{v}")
         model.optimize()
