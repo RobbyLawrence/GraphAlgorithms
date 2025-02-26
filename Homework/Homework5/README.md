@@ -13,3 +13,10 @@ algorithm and couldn't nail them all down. The program I came up with is VERY VE
 as it uses recursive backtracking. The main time is spent in the find_vertex_cover function, where I try a vertex, and if
 it leads to a valid cover, I leave it in; otherwise, I take it out. That's why the program is so slow. I PROMISE IT WORKS THOUGH!
 Only for small graphs though ;-:
+
+For problem 2b, I included a pdf where I wrote my thoughts on the problem.
+
+For problem 2c, I attached a program main.py that implements the ideas in my pdf
+using Gurobi in Python. I had to watch a lot of YouTube videos to get this to work...
+While formulating the problem was fun, I did NOT enjoy actually writing the code and having
+to work through Gurobi's quirks. You should be able to run the file with `python main.py <file_name>`.
