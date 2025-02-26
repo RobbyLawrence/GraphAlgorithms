@@ -19,4 +19,7 @@ For problem 2b, I included a pdf where I wrote my thoughts on the problem.
 For problem 2c, I attached a program main.py that implements the ideas in my pdf
 using Gurobi in Python. I had to watch a lot of YouTube videos to get this to work...
 While formulating the problem was fun, I did NOT enjoy actually writing the code and having
-to work through Gurobi's quirks. You should be able to run the file with `python main.py <file_name>`.
+to work through Gurobi's quirks. I'm not much of a Python wizard, so I had to use PyCharm and wrangle Gurobi
+from there. I'm not sure how to include Gurobi library; it works on my machine, but I don't know how to run
+it on the Linux machines. If we need to talk about it to get it to work, that's cool with me; just reach out.
+email is rlawren9@vols.utk.edu.

@@ -37,6 +37,7 @@ def solve_min_vertex_cover(num_vertices, edges):
 
 
 def main():
+    # make sure there are only two command line args
     if len(sys.argv) != 2:
         print("usage: python main.py <file_name>")
         sys.exit(1)
