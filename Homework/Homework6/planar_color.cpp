@@ -1,242 +1,154 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
-#include <stack>
-#include <list>
 #include <algorithm>
-#include <set>
+#include <chrono>
+#include <random>
+#include <numeric>
 
 using namespace std;
 
-struct SdEntry {
-    int vertex;
-    bool is_merged;
-    int merged_with;
-    vector<int> neighbors;
+// using an adjacency list instead of matrix for this one
+vector<vector<int> > read_graph(const string &file_name, int &num_vertices) {
+    ifstream fin(file_name);
+    if (!fin.is_open()) {
+        cerr << "Unable to open file\n";
+        exit(1);
+    }
+    int u, v;
+    int max_vertex = -1;
+    vector<pair<int, int> > edges;
+    while (fin >> u >> v) {
+        edges.push_back({u, v});
+        if (u > max_vertex) {
+            max_vertex = u;
+        }
+        if (v > max_vertex) {
+            max_vertex = v;
+        }
+    }
+    num_vertices = max_vertex + 1;
+    vector<vector<int> > adj(num_vertices);
+    for (pair<int,int> edge : edges) {
+        u = edge.first;
+        v = edge.second;
+        adj[u].push_back(v);
+        adj[v].push_back(u);
+    }
+    return adj;
+}
+// create indices and order them by degree from high to low
+vector<int> gen_high_low(const vector<int> &degrees) {
+    int n = degrees.size();
+    vector<int> order(n);
+    // was using loops + .push_back(i) to fill vector, but it took to long so I switched to iota
+    iota(order.begin(),order.end(),0);
+    sort(order.begin(), order.end(), [&degrees](int a, int b) { // comparator function
+        if (degrees[a] != degrees[b]) {
+            return degrees[a] > degrees[b];
+        } else {
+            return a > b;
+        }
+    });
+    return order;
+}
+// create indices and order them by degree from low to high
+vector<int> gen_low_high(const vector<int> &degrees) {
+    int n = degrees.size();
+    vector<int> order(n);
+    iota(order.begin(),order.end(),0);
+    sort(order.begin(), order.end(), [&degrees](int a, int b) { // comparator function opposite of previous
+        if (degrees[a] != degrees[b]) {
+            return degrees[a] < degrees[b];
+        }
+        else {
+            return a < b;
+        }
+    });
 
-    SdEntry(int v, bool merged, int with, const vector<int>& n) : vertex(v), is_merged(merged), merged_with(with), neighbors(n) {}
-};
+    return order;
+}
+// create indices and order them by degree randomly
+vector<int> gen_random(int n) {
+    vector<int> order(n);
+    iota(order.begin(),order.end(),0);
+    // had to look up how to use <random> lol
+    random_device rd;
+    mt19937 g(rd());
+    shuffle(order.begin(), order.end(), g);
+    return order;
+}
+// algorithm for greedy coloring
+int greedy_coloring(const vector<vector<int> > &adj, const vector<int> &order) {
+    int n = adj.size();
+    vector<int> color(n, -1);
+    int max_color = -1;
+    vector<bool> used; // used vector to keep track of used colors
+    for (int v : order) {
+        if (max_color == -1) {
+            used.assign(1,false);
+        }
+        else {
+            used.assign(max_color + 2, false);
+        }
 
-class PlanarGraphFiveColorer {
-    int n;
-    vector<vector<bool>> adj_matrix;
-    vector<list<int>> adjacency_lists;
-    vector<bool> active;
-    vector<int> degree;
-    stack<int> S4, S5;
-    stack<SdEntry> Sd;
-    vector<int> color;
-
-public:
-    PlanarGraphFiveColorer(int numVertices) : n(numVertices), adj_matrix(numVertices, vector<bool>(numVertices, false)),
-        adjacency_lists(numVertices), active(numVertices, true), degree(numVertices, 0), color(numVertices, -1) {}
-
-    void addEdge(int u, int v) {
-        if (!adj_matrix[u][v] && u != v) {
-            adj_matrix[u][v] = true;
-            adj_matrix[v][u] = true;
-            adjacency_lists[u].push_back(v);
-            adjacency_lists[v].push_back(u);
-            degree[u]++;
-            degree[v]++;
+        for (int neighbor : adj[v]) {
+            if (color[neighbor] != -1) {
+                if (color[neighbor] >= (int)used.size() ) {
+                    used.resize(color[neighbor] + 1, false);
+                }
+                used[color[neighbor]] = true;
+            }
+        }
+        int c = 0;
+        while (c < (int)used.size() && used[c]) {
+            c++;
+        }
+        color[v] = c;
+        if (c > max_color) {
+            max_color = c;
         }
     }
 
-    void initializeStacks() {
-        for (int v = 0; v < n; ++v) {
-            if (degree[v] <= 4) {
-                S4.push(v);
-            } else if (degree[v] == 5) {
-                bool hasLowDegreeNeighbor = false;
-                for (int w : adjacency_lists[v]) {
-                    if (degree[w] <= 6) {
-                        hasLowDegreeNeighbor = true;
-                        break;
-                    }
-                }
-                if (hasLowDegreeNeighbor) {
-                    S5.push(v);
-                }
-            }
-        }
+    return max_color + 1;
+}
+
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        cerr << "Usage: " << argv[0] << " <graph_file>" << endl;
+        return 1;
+    }
+    int num_vertices;
+    vector<vector<int> > adj = read_graph(argv[1], num_vertices);
+    vector<int> degrees(num_vertices); // easy to construct
+    for (int i = 0; i < num_vertices; ++i) {
+        degrees[i] = adj[i].size();
     }
 
-    void processS4() {
-        while (!S4.empty()) {
-            int v = S4.top();
-            S4.pop();
-            if (!active[v]) continue;
-            active[v] = false;
-            vector<int> neighbors(adjacency_lists[v].begin(), adjacency_lists[v].end());
-            Sd.emplace(v, false, -1, neighbors);
-            for (int w : neighbors) {
-                adjacency_lists[w].remove(v);
-                degree[w]--;
-                if (active[w] && degree[w] <= 4) {
-                    S4.push(w);
-                } else if (active[w] && degree[w] == 5) {
-                    bool hasLow = false;
-                    for (int u : adjacency_lists[w]) {
-                        if (degree[u] <= 6) {
-                            hasLow = true;
-                            break;
-                        }
-                    }
-                    if (hasLow) S5.push(w);
-                }
-            }
-        }
-    }
+    // go through with greedy coloring using each ordering,
+    // and record the time that it takes
+    // I also had to look up how to use <chrono> lol
+    auto start_high = chrono::high_resolution_clock::now();
+    vector<int> order_high = gen_high_low(degrees);
+    int colors_high = greedy_coloring(adj, order_high);
+    auto end_high = chrono::high_resolution_clock::now();
+    chrono::duration<double> elapsed_high = end_high - start_high;
+    // low to high
+    auto start_low = chrono::high_resolution_clock::now();
+    vector<int> order_low = gen_low_high(degrees);
+    int colors_low = greedy_coloring(adj, order_low);
+    auto end_low = chrono::high_resolution_clock::now();
+    chrono::duration<double> elapsed_low = end_low - start_low;
+    // random
+    auto start_random = chrono::high_resolution_clock::now();
+    vector<int> order_random = gen_random(num_vertices);
+    int colors_random = greedy_coloring(adj, order_random);
+    auto end_random = chrono::high_resolution_clock::now();
+    chrono::duration<double> elapsed_random = end_random - start_random;
 
-    void processS5() {
-        while (!S5.empty()) {
-            int v = S5.top();
-            S5.pop();
-            if (!active[v]) continue;
-            int v1 = -1;
-            for (int w : adjacency_lists[v]) {
-                if (degree[w] <= 6) {
-                    v1 = w;
-                    break;
-                }
-            }
-            if (v1 == -1) continue;
-            auto it = find(adjacency_lists[v].begin(), adjacency_lists[v].end(), v1);
-            int idx = distance(adjacency_lists[v].begin(), it);
-            vector<int> neighbors;
-            for (int i = 0; i < 5; ++i) {
-                neighbors.push_back(*next(adjacency_lists[v].begin(), (idx + i) % 5));
-            }
-            int v3 = neighbors[2];
-            if (!adj_matrix[v1][v3]) {
-                active[v3] = false;
-                Sd.emplace(v3, true, v1, vector<int>());
-                list<int> toAdd;
-                for (int w : adjacency_lists[v3]) {
-                    if (w != v1 && !adj_matrix[v1][w]) {
-                        toAdd.push_back(w);
-                    }
-                }
-                for (int w : toAdd) {
-                    adj_matrix[v1][w] = adj_matrix[w][v1] = true;
-                    adjacency_lists[v1].push_back(w);
-                    adjacency_lists[w].push_back(v1);
-                    degree[v1]++;
-                    degree[w]++;
-                }
-                for (int w : adjacency_lists[v3]) {
-                    adjacency_lists[w].remove(v3);
-                    if (active[w]) {
-                        if (degree[w] <= 4) S4.push(w);
-                        else if (degree[w] == 5) {
-                            bool hasLow = false;
-                            for (int u : adjacency_lists[w]) {
-                                if (degree[u] <= 6) hasLow = true;
-                            }
-                            if (hasLow) S5.push(w);
-                        }
-                    }
-                }
-            } else {
-                int v2 = neighbors[1], v4 = neighbors[3];
-                active[v4] = false;
-                Sd.emplace(v4, true, v2, vector<int>());
-                list<int> toAdd;
-                for (int w : adjacency_lists[v4]) {
-                    if (w != v2 && !adj_matrix[v2][w]) {
-                        toAdd.push_back(w);
-                    }
-                }
-                for (int w : toAdd) {
-                    adj_matrix[v2][w] = adj_matrix[w][v2] = true;
-                    adjacency_lists[v2].push_back(w);
-                    adjacency_lists[w].push_back(v2);
-                    degree[v2]++;
-                    degree[w]++;
-                }
-                for (int w : adjacency_lists[v4]) {
-                    adjacency_lists[w].remove(v4);
-                    if (active[w]) {
-                        if (degree[w] <= 4) S4.push(w);
-                        else if (degree[w] == 5) {
-                            bool hasLow = false;
-                            for (int u : adjacency_lists[w]) {
-                                if (degree[u] <= 6) hasLow = true;
-                            }
-                            if (hasLow) S5.push(w);
-                        }
-                    }
-                }
-            }
-            active[v] = false;
-            vector<int> v_neighbors(adjacency_lists[v].begin(), adjacency_lists[v].end());
-            Sd.emplace(v, false, -1, v_neighbors);
-            for (int w : adjacency_lists[v]) {
-                adjacency_lists[w].remove(v);
-                degree[w]--;
-                if (active[w] && degree[w] <= 4) S4.push(w);
-                else if (active[w] && degree[w] == 5) {
-                    bool hasLow = false;
-                    for (int u : adjacency_lists[w]) {
-                        if (degree[u] <= 6) hasLow = true;
-                    }
-                    if (hasLow) S5.push(w);
-                }
-            }
-            break;
-        }
-    }
+    cout << "High to low: " << colors_high << " colors, " << fixed << elapsed_high.count() << " sec" << endl;
+    cout << "Low to high: " << colors_low << " colors, " << fixed << elapsed_low.count() << " sec" << endl;
+    cout << "Pseudo-random: " << colors_random << " colors, " << fixed << elapsed_random.count() << " sec" << endl;
 
-    void colorGraph() {
-        while (!Sd.empty()) {
-            SdEntry entry = Sd.top();
-            Sd.pop();
-            if (entry.is_merged) {
-                color[entry.vertex] = color[entry.merged_with];
-            } else {
-                set<int> used;
-                for (int w : entry.neighbors) {
-                    if (color[w] != -1) used.insert(color[w]);
-                }
-                for (int c = 0; c < 5; ++c) {
-                    if (used.find(c) == used.end()) {
-                        color[entry.vertex] = c;
-                        break;
-                    }
-                }
-            }
-        }
-    }
-
-    vector<int> getColors() {
-        return color;
-    }
-
-    void fiveColor() {
-        initializeStacks();
-        while (true) {
-            processS4();
-            bool allInactive = all_of(active.begin(), active.end(), [](bool a) { return !a; });
-            if (allInactive) break;
-            processS5();
-        }
-        colorGraph();
-    }
-};
-
-int main() {
-    int n, m;
-    cin >> n >> m;
-    PlanarGraphFiveColorer colorer(n);
-    for (int i = 0; i < m; ++i) {
-        int u, v;
-        cin >> u >> v;
-        colorer.addEdge(u, v);
-    }
-    colorer.fiveColor();
-    vector<int> colors = colorer.getColors();
-    for (int c : colors) {
-        cout << c << " ";
-    }
-    cout << endl;
     return 0;
 }
