@@ -1,0 +1,13 @@
+Which canonization algorithm works very well under the specific constraints of molecule canonization?
+The Morgan algorithm works very well for molecule canonization because it's specialized specifically for that. It exhibits near linear time in the best and worst cases (nlog(n)).
+Morgan canonization ensures that isomorphic molecular graphs map to identical canonical SMILES strings.
+
+What strategy does the NAUTY's algorithm employ to achieve canonization?
+It implements automorphism pruning. We can cancel out structures that we've already seen if we recognize them. To do this, it uses partition refinement, initializing partitions of nodes according to an equitable partition.
+
+What are the five steps our program takes to generate an IUPAC name?
+ - Get SMILES Input
+ - Generate uncanonized graph
+ - Canonize using Morgan's algorithm, convert back to SMILES format
+ - Search PubChem table of common names
+ - Algorithmically name generate name
